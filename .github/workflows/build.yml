@@ -1,0 +1,73 @@
+name: Deploy MAIK MT Studio Web & Android APK
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository [Clone Source]
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20 [Node Runtime]
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup Java 17 [Android Gradle SDK]
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Android SDK [Android Build Tools]
+        uses: android-actions/setup-android@v3
+
+      - name: Build Capacitor Android Project [Wrapper Init]
+        run: |
+          mkdir -p www
+          cp index.html www/index.html
+          npm init -y
+          npm install @capacitor/core @capacitor/cli @capacitor/android
+          npx cap init "MAIK MT Studio DSP" "com.maikmt.studiodsp" --web-dir www
+          npx cap add android
+          npx cap sync android
+
+      - name: Compile Android Debug APK [Gradle Build]
+        working-directory: ./android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug
+          cp app/build/outputs/apk/debug/app-debug.apk ../MAIK-MT-Studio-DSP.apk
+
+      - name: Upload APK to Actions Artifacts [Artifact Backup]
+        uses: actions/upload-artifact@v4
+        with:
+          name: MAIK-MT-Studio-DSP-APK
+          path: MAIK-MT-Studio-DSP.apk
+
+      - name: Publish Direct APK to GitHub Releases [One-Click Mobile Download]
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.${{ github.run_number }}
+          name: "MAIK MT Studio DSP v1.0.${{ github.run_number }} [Android APK]"
+          files: MAIK-MT-Studio-DSP.apk
+          prerelease: false
+
+      - name: Upload Web App for GitHub Pages [Web Build]
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./www
+
+      - name: Deploy Live Web App [GitHub Pages Publish]
+        uses: actions/deploy-pages@v4
+        
