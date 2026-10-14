@@ -12,25 +12,22 @@ permissions:
 
 jobs:
   build-and-deploy:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout Repository [Clone Source]
         uses: actions/checkout@v4
 
-      - name: Setup Node.js 20 [Node Runtime]
+      - name: Setup Node.js 22 [Node Runtime]
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
-      - name: Setup Java 17 [Android Gradle SDK]
+      - name: Setup Java 21 [Android Gradle SDK Requirement]
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '17'
-
-      - name: Setup Android SDK [Android Build Tools]
-        uses: android-actions/setup-android@v3
+          java-version: '21'
 
       - name: Build Capacitor Android Project [Wrapper Init]
         run: |
@@ -46,7 +43,7 @@ jobs:
         working-directory: ./android
         run: |
           chmod +x gradlew
-          ./gradlew assembleDebug
+          ./gradlew assembleDebug --no-daemon
           cp app/build/outputs/apk/debug/app-debug.apk ../MAIK-MT-Studio-DSP.apk
 
       - name: Upload APK to Actions Artifacts [Artifact Backup]
@@ -70,4 +67,3 @@ jobs:
 
       - name: Deploy Live Web App [GitHub Pages Publish]
         uses: actions/deploy-pages@v4
-        
