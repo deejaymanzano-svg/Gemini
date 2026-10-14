@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>MAIK MT • Studio Mastering DSP [Obsidian Edition]</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background: radial-gradient(circle at top, #111624 0%, #06080d 65%, #040508 100%);
+      color: #e2e8f0;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+    .obsidian-card {
+      background: linear-gradient(145deg, rgba(16, 21, 34, 0.94), rgba(9, 12, 20, 0.96));
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    }
+    .obsidian-badge {
+      background: radial-gradient(circle at 30% 30%, #273249, #090c14 75%);
+      border: 1px solid rgba(34, 211, 238, 0.45);
+      box-shadow: 0 0 18px rgba(6, 182, 212, 0.25), inset 0 0 8px rgba(34, 211, 238, 0.2);
+    }
+    input[type="range"] { accent-color: #06b6d4; }
+    canvas { image-rendering: crisp-edges; }
+  </style>
+</head>
+<body class="min-h-screen pb-16">
+
+  <!-- MAIK MT STUDIO OBSIDIAN HEADER -->
+  <header class="border-b border-slate-800/90 bg-slate-950/95 sticky top-0 z-30 px-4 py-3 flex items-center justify-between shadow-xl">
+    <div class="flex items-center gap-3">
+      <!-- 3D Obsidian Circular Emblem -->
+      <div class="obsidian-badge w-10 h-10 rounded-full flex items-center justify-center shrink-0">
+        <span class="text-[11px] font-black tracking-tighter text-cyan-300">MMT</span>
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <h1 class="text-sm sm:text-base font-black tracking-widest uppercase text-white">
+            MAIK MT <span class="text-cyan-400 font-mono font-bold">STUDIO DSP</span>
+          </h1>
+          <span class="hidden sm:inline-block text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/30">[OBSIDIAN PRO]</span>
+        </div>
+        <p class="text-[10px] text-slate-400 font-mono">Suno AI Mastering • Dual 4096-FFT • LR4 Multiband • M/S • 4x True-Peak</p>
+      </div>
+    </div>
+    <span id="statusBadge" class="text-[11px] font-mono px-2.5 py-1 rounded bg-slate-900 text-slate-300 border border-slate-700">[IDLE]</span>
+  </header>
+
+  <main class="max-w-4xl mx-auto px-4 pt-5 space-y-5">
+
+    <!-- STEP 1: SOURCE LOADER & GENRE PROFILE SELECTOR -->
+    <section class="obsidian-card rounded-2xl p-5 space-y-4">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <h2 class="text-xs sm:text-sm font-bold uppercase tracking-wider text-cyan-400">1. Cargar Pista y Perfil [Source WAV &amp; Genre Curve]</h2>
+          <p id="genreDescLabel" class="text-[11px] text-slate-400 font-mono mt-0.5">[Reggaeton / Dembow: Deep sub weight, punchy 100Hz kick/bass, strong 310Hz mud cut, -8.5 LUFS]</p>
+        </div>
+        <select id="genreSelect" class="bg-slate-900 border border-cyan-500/40 text-xs rounded-lg px-3 py-2 text-cyan-200 font-mono font-semibold">
+          <option value="reggaeton">Reggaeton / Dembow [-8.5 LUFS]</option>
+          <option value="techhouse">Tech House / Bumping [-8.0 LUFS]</option>
+          <option value="hardstyle">Hardstyle / Festival [-7.5 LUFS]</option>
+          <option value="streaming">Modern Streaming [-10.5 LUFS]</option>
+        </select>
+      </div>
+
+      <label class="flex flex-col items-center justify-center border-2 border-dashed border-slate-700 hover:border-cyan-400 transition rounded-xl p-6 cursor-pointer bg-slate-900/50">
+        <span class="text-sm font-semibold text-white text-center" id="fileNameLabel">Toca para cargar tu archivo WAV de Suno en MAIK MT Studio</span>
+        <span class="text-[11px] text-slate-400 mt-1 font-mono">[32-Bit Float Engine • Dual Pre/Post 4096-Pt FFT • 24-Bit TPDF Export]</span>
+        <input type="file" id="audioInput" accept="audio/*,.wav" class="hidden" />
+      </label>
+
+      <div id="sourceMeta" class="hidden grid grid-cols-3 gap-2 text-center text-xs font-mono bg-slate-900/90 p-3 rounded-xl border border-slate-800">
+        <div><span class="text-slate-500 block text-[10px]">SAMPLE RATE</span><span id="metaSR" class="text-white font-bold">-</span></div>
+        <div><span class="text-slate-500 block text-[10px]">DURATION</span><span id="metaDur" class="text-white font-bold">-</span></div>
+        <div><span class="text-slate-500 block text-[10px]">CHANNELS</span><span id="metaCh" class="text-white font-bold">-</span></div>
+      </div>
+    </section>
+
+    <!-- STEP 2: DEEP FFT ANALYSIS & APPROVAL GATE -->
+    <section id="analysisSection" class="hidden obsidian-card rounded-2xl p-5 space-y-5">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div>
+          <h2 class="text-xs sm:text-sm font-bold uppercase tracking-wider text-amber-400">2. Diagnóstico Acústico y Cadena MAIK MT [Pre-Master Diagnosis]</h2>
+          <p class="text-[11px] text-slate-400">Revisa el espectro FFT, las resonancias detectadas y confirma o ajusta los parámetros</p>
+        </div>
+        <span id="activeGenreBadge" class="text-[10px] font-mono bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 px-2.5 py-1 rounded">[REGGAETON CURVE]</span>
+      </div>
+
+      <!-- Primary Metrics -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-center font-mono">
+        <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
+          <span class="text-[10px] text-slate-400 block">INTEGRATED LUFS</span>
+          <span id="preLufs" class="text-base sm:text-lg font-bold text-white">-</span>
+        </div>
+        <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
+          <span class="text-[10px] text-slate-400 block">4x TRUE PEAK</span>
+          <span id="prePeak" class="text-base sm:text-lg font-bold text-white">-</span>
+        </div>
+        <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
+          <span class="text-[10px] text-slate-400 block">CREST FACTOR</span>
+          <span id="preCrest" class="text-base sm:text-lg font-bold text-white">-</span>
+        </div>
+        <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
+          <span class="text-[10px] text-slate-400 block">M/S PHASE CORR</span>
+          <span id="prePhase" class="text-base sm:text-lg font-bold text-white">-</span>
+        </div>
+      </div>
+
+      <!-- Pre-Master 4096-Point FFT Spectrum Canvas -->
+      <div class="bg-slate-950 border border-slate-800 rounded-xl p-3 space-y-2">
+        <div class="flex flex-wrap justify-between items-center gap-2 text-[11px] font-mono">
+          <span class="text-cyan-400 font-bold">ANALIZADOR ESPECTRAL FFT 4096-PT [PRE-MASTER + NOTCH HUNTER]</span>
+          <div class="flex items-center gap-3 text-[10px]">
+            <span class="text-cyan-300">━ Pre-Master</span>
+            <span class="text-rose-400">● Surgical Notches</span>
+          </div>
+        </div>
+        <canvas id="fftCanvas" width="820" height="200" class="w-full h-44 bg-slate-950 rounded"></canvas>
+      </div>
+
+      <!-- Detected Surgical Notches (Suno AI Artifacts) -->
+      <div class="bg-slate-900/75 border border-rose-500/30 rounded-xl p-3.5 space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold uppercase tracking-wider text-rose-400">Supresor Quirúrgico de Resonancias IA [3x High-Q Notch Filters]</span>
+          <label class="flex items-center gap-1.5 text-xs font-mono text-slate-300 cursor-pointer">
+            <input type="checkbox" id="enableNotches" checked class="accent-rose-500" />
+            <span>[Active]</span>
+          </label>
+        </div>
+        <div id="notchContainer" class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs font-mono"></div>
+      </div>
+
+      <!-- 6-Band Parametric Tonal EQ -->
+      <div class="space-y-2.5">
+        <div class="flex items-center justify-between">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-cyan-300">Ecualizador Tonal de 6 Bandas [Genre-Calibrated Parametric EQ]</h3>
+          <button id="resetPrescriptionBtn" class="text-[11px] text-cyan-400 underline font-mono">[Reset to Genre Curve]</button>
+        </div>
+        <div id="eqSlidersContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 bg-slate-900/60 p-3.5 rounded-xl border border-slate-800"></div>
+      </div>
+
+      <!-- Linkwitz-Riley 3-Band Multiband Compressor + Mid/Side + 4x True Peak Controls -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <!-- Multiband Compressor -->
+        <div class="bg-slate-900/60 p-3.5 rounded-xl border border-slate-800 space-y-2.5 text-xs font-mono">
+          <div class="text-amber-300 font-bold uppercase text-[11px]">Compresor Multibanda Linkwitz-Riley [LR4 3-Band Dynamics]</div>
+          <div class="grid grid-cols-3 gap-2">
+            <div>
+              <label class="text-[10px] text-slate-400 block">LOW THR [&lt;180Hz]</label>
+              <input id="mbLowThr" type="number" step="0.5" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-white" />
+            </div>
+            <div>
+              <label class="text-[10px] text-slate-400 block">MID THR [180-3.2k]</label>
+              <input id="mbMidThr" type="number" step="0.5" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-white" />
+            </div>
+            <div>
+              <label class="text-[10px] text-slate-400 block">HIGH THR [&gt;3.2k]</label>
+              <input id="mbHighThr" type="number" step="0.5" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-white" />
+            </div>
+          </div>
+          <div class="grid grid-cols-3 gap-2">
+            <div>
+              <label class="text-[10px] text-slate-400 block">LOW RATIO</label>
+              <input id="mbLowRat" type="number" step="0.2" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-white" />
+            </div>
+            <div>
+              <label class="text-[10px] text-slate-400 block">MID RATIO</label>
+              <input id="mbMidRat" type="number" step="0.2" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-white" />
+            </div>
+            <div>
+              <label class="text-[10px] text-slate-400 block">HIGH RATIO</label>
+              <input id="mbHighRat" type="number" step="0.2" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-white" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Mid/Side Matrix & 4x True-Peak Finalizer -->
+        <div class="bg-slate-900/60 p-3.5 rounded-xl border border-slate-800 space-y-2.5 text-xs font-mono">
+          <div class="text-purple-300 font-bold uppercase text-[11px]">Matriz Mid/Side &amp; Limitador 4x True-Peak [M/S + 4x ISP Limiter]</div>
+          <div class="grid grid-cols-3 gap-2">
+            <div>
+              <label class="text-[10px] text-slate-400 block">TARGET [LUFS]</label>
+              <input id="targetLufsInput" type="number" step="0.5" min="-16" max="-6" class="w-full mt-1 bg-slate-950 border border-cyan-500/40 rounded px-2 py-1 text-cyan-300 font-bold" />
+            </div>
+            <div>
+              <label class="text-[10px] text-slate-400 block">STEREO WIDTH [%]</label>
+              <input id="msWidth" type="number" step="2" min="80" max="160" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-white" />
+            </div>
+            <div>
+              <label class="text-[10px] text-slate-400 block">SUB MONO [Hz]</label>
+              <input id="msMonoFreq" type="number" step="5" min="60" max="160" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-white" />
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="text-[10px] text-slate-400 block">TAPE WARMTH [%]</label>
+              <input id="satDrive" type="number" step="1" min="0" max="35" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-white" />
+            </div>
+            <div>
+              <label class="text-[10px] text-slate-400 block">4x TP CEILING [dBTP]</label>
+              <input id="ceilingDb" type="number" step="0.1" value="-1.0" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-white" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Diagnostic Findings -->
+      <div class="bg-slate-950/80 border border-slate-800 rounded-xl p-3.5 space-y-1">
+        <div class="text-[11px] font-bold text-slate-300 uppercase tracking-wider">Informe de Ingeniería MAIK MT [Automated Diagnostic Log]:</div>
+        <ul id="diagnosticList" class="text-xs text-slate-300 space-y-1 list-disc list-inside font-mono"></ul>
+      </div>
+
+      <button id="applyMasterBtn" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-extrabold text-sm uppercase tracking-wider shadow-lg shadow-cyan-500/20 transition">
+        Aceptar Cadena, Masterizar y Auditar [Run MAIK MT Studio DSP &amp; QA]
+      </button>
+    </section>
+
+    <!-- STEP 3: POST-MASTER DUAL FFT OVERLAY, QA AUDIT & LOUDNESS-MATCHED A/B DECK -->
+    <section id="verificationSection" class="hidden obsidian-card rounded-2xl p-5 space-y-5 border border-emerald-500/30">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div>
+          <h2 class="text-xs sm:text-sm font-bold uppercase tracking-wider text-emerald-400">3. Superposición FFT Pre/Post y Auditoría [Dual Spectrum &amp; QA Audit]</h2>
+          <p class="text-[11px] text-slate-400">Verificación de lazo cerrado sobre el audio masterizado y escucha A/B igualada en LUFS</p>
+        </div>
+        <span id="qaGlobalBadge" class="text-xs font-mono font-bold px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">[MAIK MT QA VERIFIED]</span>
+      </div>
+
+      <!-- DUAL PRE/POST 4096-POINT FFT OVERLAY CANVAS -->
+      <div class="bg-slate-950 border border-emerald-500/30 rounded-2xl p-3.5 space-y-2.5 shadow-inner">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <span class="text-xs font-bold uppercase tracking-wider text-emerald-300 block">Superposición Espectral Pre vs Post [Dual 4096-Pt FFT Overlay]</span>
+            <span class="text-[10px] font-mono text-slate-400">Compara la respuesta en frecuencia antes y después del procesado DSP</span>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-3">
+            <div class="flex items-center gap-2 text-[10px] font-mono">
+              <span class="text-cyan-400 font-bold">━ PRE [Original]</span>
+              <span class="text-emerald-400 font-bold">━ POST [MAIK MT Master]</span>
+            </div>
+            <label class="flex items-center gap-1.5 bg-slate-900 border border-slate-700 px-2.5 py-1 rounded-lg text-[10px] font-mono text-slate-200 cursor-pointer">
+              <input type="checkbox" id="fftNormalizeToggle" checked class="accent-emerald-400" />
+              <span>[LUFS-Normalized Tilt View]</span>
+            </label>
+          </div>
+        </div>
+
+        <canvas id="fftDualCanvas" width="820" height="220" class="w-full h-48 bg-slate-950 rounded"></canvas>
+      </div>
+
+      <!-- REAL-TIME PHASE-LOCKED LOUDNESS-MATCHED A/B AUDITION DECK -->
+      <div class="bg-slate-950/95 border border-cyan-500/40 rounded-2xl p-4 space-y-4 shadow-lg">
+        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-2.5">
+          <div>
+            <span class="text-xs font-bold uppercase tracking-wider text-cyan-300 block">Consola de Escucha A/B en Tiempo Real [Phase-Locked A/B Deck]</span>
+            <span id="abCompensationInfo" class="text-[11px] font-mono text-emerald-400">[Loudness Match Active: Equalizing perceived LUFS]</span>
+          </div>
+
+          <!-- Loudness Match Toggle -->
+          <label class="flex items-center gap-2 bg-slate-900 border border-slate-700 px-3 py-1.5 rounded-xl cursor-pointer select-none">
+            <input type="checkbox" id="abLoudnessMatchToggle" checked class="accent-emerald-400 w-4 h-4" />
+            <span class="text-xs font-mono font-semibold text-slate-200">Igualar Volumen [LUFS Match]</span>
+          </label>
+        </div>
+
+        <!-- Transport & Instant A/B Switcher Buttons -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 items-center">
+          <button id="abPlayPauseBtn" class="py-3 px-4 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-extrabold text-xs font-mono uppercase tracking-wider transition">
+            ▶ Play Audition [Sync]
+          </button>
+
+          <button id="abBtnA" class="py-3 px-4 rounded-xl border font-mono text-xs font-bold uppercase tracking-wider transition bg-slate-900 border-slate-700 text-slate-400">
+            A: Original [Source WAV]
+          </button>
+
+          <button id="abBtnB" class="py-3 px-4 rounded-xl border font-mono text-xs font-bold uppercase tracking-wider transition bg-emerald-500/20 border-emerald-400 text-emerald-300 shadow-[0_0_15px_rgba(16,185,129,0.25)]">
+            B: MAIK MT Master [Active]
+          </button>
+        </div>
+
+        <!-- Seek Bar & Time Readout -->
+        <div class="space-y-1">
+          <input type="range" id="abSeekSlider" min="0" max="100" step="0.1" value="0" class="w-full cursor-pointer" />
+          <div class="flex justify-between text-[11px] font-mono text-slate-400">
+            <span id="abCurrentTime">00:00.0</span>
+            <span id="abActiveStreamLabel" class="text-emerald-400 font-bold">[AUDITIONING: B - MAIK MT MASTER]</span>
+            <span id="abTotalTime">00:00.0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Verification Table -->
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs font-mono border-collapse">
+          <thead>
+            <tr class="border-b border-slate-800 text-slate-400 text-[10px]">
+              <th class="py-2">PARAMETER</th>
+              <th class="py-2">PRE-MASTER</th>
+              <th class="py-2">TARGET SPEC</th>
+              <th class="py-2">POST-MASTER</th>
+              <th class="py-2 text-right">QA STATUS</th>
+            </tr>
+          </thead>
+          <tbody id="qaTableBody" class="divide-y divide-slate-800/70"></tbody>
+        </table>
+      </div>
+
+      <!-- Spectral Band Deltas -->
+      <div class="space-y-2 bg-slate-900/70 p-3.5 rounded-xl border border-slate-800">
+        <div class="text-[11px] font-mono text-slate-400 uppercase">Balance Espectral Pre vs Post [6-Band Relative Energy dB]</div>
+        <div id="spectralComparisonBars" class="space-y-1.5 pt-1"></div>
+      </div>
+
+      <button id="downloadMasterBtn" class="w-full py-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-sm uppercase tracking-wider shadow-lg shadow-emerald-500/20 transition">
+        Descargar MAIK MT Master WAV 24-Bit [Export Studio WAV]
+      </button>
+    </section>
+
+  </main>
+
+  <script>
+    // =========================================================================
+    // MAIK MT STUDIO MASTERING DSP ENGINE [OBSIDIAN PRO EDITION]
+    // Dual Pre/Post 4096-FFT Overlay + Genre Profiles + Phase-Locked A/B Deck
+    // =========================================================================
+
+    let originalBuffer = null;
+    let masteredBuffer = null;
+    let preMetrics = null;
+    let postMetrics = null;
+    let currentPrescription = null;
+    let currentFileName = "suno_track";
+
+    const GENRE_PR
