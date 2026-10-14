@@ -65,15 +65,10 @@
       </div>
 
       <label class="flex flex-col items-center justify-center border-2 border-dashed border-slate-700 hover:border-cyan-400 transition rounded-xl p-6 cursor-pointer bg-slate-900/50">
-        <span class="text-sm font-semibold text-white text-center" id="fileNameLabel">Toca aquí para seleccionar tu archivo WAV de Suno</span>
-        <span class="text-[11px] text-slate-400 mt-1 font-mono">[Android Safe Touch Loader • Acoustic Scoring Engine]</span>
-        <input type="file" id="audioInput" accept="audio/*,.wav,audio/wav,audio/mp3" class="hidden" />
+        <span class="text-sm font-semibold text-white text-center" id="fileNameLabel">Toca para cargar tu archivo WAV de Suno</span>
+        <span class="text-[11px] text-slate-400 mt-1 font-mono">[32-Bit Float Engine • Dual Pre/Post 4096-Pt FFT • Acoustic Scoring]</span>
+        <input type="file" id="audioInput" accept="audio/*,.wav" class="hidden" />
       </label>
-
-      <!-- On-Screen Mobile Debug Log -->
-      <div id="mobileLogBox" class="hidden p-2.5 bg-slate-950 border border-slate-800 rounded-lg text-[10px] font-mono text-cyan-300 max-h-24 overflow-y-auto">
-        <div class="text-slate-500">[System Log Initialized]</div>
-      </div>
 
       <div id="sourceMeta" class="hidden grid grid-cols-3 gap-2 text-center text-xs font-mono bg-slate-900/90 p-3 rounded-xl border border-slate-800">
         <div><span class="text-slate-500 block text-[10px]">SAMPLE RATE</span><span id="metaSR" class="text-white font-bold">-</span></div>
@@ -319,4 +314,10 @@
         </div>
       </div>
 
-      <div class="over
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs font-mono border-collapse">
+          <thead>
+            <tr class="border-b border-slate-800 text-slate-400 text-[10px]">
+              <th class="py-2">PARAMETER</th>
+              <th class="py-2">PRE-MASTER</th>
+              <th cl
