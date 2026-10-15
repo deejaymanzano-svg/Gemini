@@ -34,7 +34,7 @@ jobs:
           mkdir -p www
           cp index.html www/index.html
           npm init -y
-          npm install @capacitor/core @capacitor/cli @capacitor/android
+          npm install @capacitor/core @capacitor/cli @capacitor/android @capacitor/filesystem @capacitor/share
           npx cap init "MAIK MT Studio DSP" "com.maikmt.studiodsp" --web-dir www
           npx cap add android
           npx cap sync android
