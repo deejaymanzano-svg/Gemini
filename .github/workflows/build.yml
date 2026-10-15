@@ -29,14 +29,26 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
-      - name: Build Capacitor Android Project [Wrapper Init]
+      - name: Build Capacitor Android Project & App Icon [Wrapper & Icon Gen]
         run: |
-          mkdir -p www
+          mkdir -p www assets
           cp index.html www/index.html
+          if [ -f logo.png ]; then cp logo.png www/logo.png; fi
           npm init -y
           npm install @capacitor/core @capacitor/cli @capacitor/android @capacitor/filesystem @capacitor/share
+          npm install -D @capacitor/assets sharp
           npx cap init "MAIK MT Studio DSP" "com.maikmt.studiodsp" --web-dir www
           npx cap add android
+          if [ -f logo.png ]; then
+            node -e '
+              const sharp = require("sharp");
+              (async () => {
+                await sharp("logo.png").resize(1024, 1024, { fit: "cover", position: "center" }).png().toFile("assets/icon.png");
+                await sharp("logo.png").resize(2732, 2732, { fit: "contain", background: { r: 7, g: 9, b: 14, alpha: 1 } }).png().toFile("assets/splash.png");
+              })();
+            '
+            npx capacitor-assets generate --android
+          fi
           npx cap sync android
 
       - name: Compile Android Debug APK [Gradle Build]
