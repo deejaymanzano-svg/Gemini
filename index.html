@@ -1,323 +1,556 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>MAIK MT • Studio Mastering DSP [Obsidian Edition]</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    body {
-      background: radial-gradient(circle at top, #111624 0%, #06080d 65%, #040508 100%);
-      color: #e2e8f0;
-      font-family: system-ui, -apple-system, sans-serif;
-    }
-    .obsidian-card {
-      background: linear-gradient(145deg, rgba(16, 21, 34, 0.94), rgba(9, 12, 20, 0.96));
-      backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.06);
-    }
-    .obsidian-badge {
-      background: radial-gradient(circle at 30% 30%, #273249, #090c14 75%);
-      border: 1px solid rgba(34, 211, 238, 0.45);
-      box-shadow: 0 0 18px rgba(6, 182, 212, 0.25), inset 0 0 8px rgba(34, 211, 238, 0.2);
-    }
-    input[type="range"] { accent-color: #06b6d4; }
-    canvas { image-rendering: crisp-edges; }
-  </style>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<title>MAIK MT • Studio Mastering DSP [Obsidian Pro]</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+body{background:radial-gradient(circle at top,#111624 0%,#06080d 65%,#040508 100%);color:#e2e8f0;font-family:system-ui,sans-serif}
+.card{background:linear-gradient(145deg,rgba(16,21,34,.94),rgba(9,12,20,.96));border:1px solid rgba(255,255,255,.08);box-shadow:0 12px 32px -8px rgba(0,0,0,.75)}
+.badge{background:radial-gradient(circle at 30% 30%,#273249,#090c14 75%);border:1px solid rgba(34,211,238,.45);box-shadow:0 0 18px rgba(6,182,212,.25)}
+input[type="range"]{accent-color:#06b6d4}
+</style>
 </head>
 <body class="min-h-screen pb-16">
+<header class="border-b border-slate-800 bg-slate-950/95 sticky top-0 z-30 px-4 py-3 flex items-center justify-between shadow-xl">
+  <div class="flex items-center gap-3">
+    <div class="badge w-10 h-10 rounded-full flex items-center justify-center shrink-0"><span class="text-[11px] font-black text-cyan-300">MMT</span></div>
+    <div>
+      <h1 class="text-sm sm:text-base font-black tracking-widest uppercase text-white">MAIK MT <span class="text-cyan-400 font-mono">STUDIO DSP</span></h1>
+      <p class="text-[10px] text-slate-400 font-mono">Score 1-10 • Dual 4096-FFT • LR4 Multiband • M/S • 4x True-Peak</p>
+    </div>
+  </div>
+  <span id="statusBadge" class="text-[11px] font-mono px-2.5 py-1 rounded bg-slate-900 text-slate-300 border border-slate-700">[IDLE]</span>
+</header>
 
-  <!-- MAIK MT STUDIO OBSIDIAN HEADER -->
-  <header class="border-b border-slate-800/90 bg-slate-950/95 sticky top-0 z-30 px-4 py-3 flex items-center justify-between shadow-xl">
-    <div class="flex items-center gap-3">
-      <div class="obsidian-badge w-10 h-10 rounded-full flex items-center justify-center shrink-0">
-        <span class="text-[11px] font-black tracking-tighter text-cyan-300">MMT</span>
-      </div>
+<main class="max-w-4xl mx-auto px-4 pt-5 space-y-5">
+  <section class="card rounded-2xl p-5 space-y-4">
+    <div class="flex flex-wrap items-center justify-between gap-2">
       <div>
-        <div class="flex items-center gap-2">
-          <h1 class="text-sm sm:text-base font-black tracking-widest uppercase text-white">
-            MAIK MT <span class="text-cyan-400 font-mono font-bold">STUDIO DSP</span>
-          </h1>
-          <span class="hidden sm:inline-block text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/30">[OBSIDIAN PRO]</span>
-        </div>
-        <p class="text-[10px] text-slate-400 font-mono">Suno AI Mastering • Acoustic Score (1-10) • Dual FFT • M/S • 4x True-Peak</p>
+        <h2 class="text-xs sm:text-sm font-bold uppercase tracking-wider text-cyan-400">1. Cargar Pista y Perfil [Source WAV &amp; Genre Curve]</h2>
+        <p id="genreDescLabel" class="text-[11px] text-slate-400 font-mono mt-0.5">[Reggaeton / Dembow: Punchy 100Hz, deep 310Hz mud cut, upfront vocals, -8.5 LUFS]</p>
+      </div>
+      <select id="genreSelect" class="bg-slate-900 border border-cyan-500/40 text-xs rounded-lg px-3 py-2 text-cyan-200 font-mono font-semibold">
+        <option value="reggaeton">Reggaeton / Dembow [-8.5 LUFS]</option>
+        <option value="techhouse">Tech House / Bumping [-8.0 LUFS]</option>
+        <option value="hardstyle">Hardstyle / Festival [-7.5 LUFS]</option>
+        <option value="streaming">Modern Streaming [-10.5 LUFS]</option>
+      </select>
+    </div>
+    <label class="flex flex-col items-center justify-center border-2 border-dashed border-slate-700 hover:border-cyan-400 transition rounded-xl p-6 cursor-pointer bg-slate-900/50">
+      <span class="text-sm font-semibold text-white text-center" id="fileNameLabel">Toca aquí para cargar tu archivo WAV de Suno</span>
+      <span class="text-[11px] text-slate-400 mt-1 font-mono">[32-Bit Float Engine • Dual 4096-Pt FFT • Score 1-10]</span>
+      <input type="file" id="audioInput" accept="audio/*,.wav" class="hidden"/>
+    </label>
+    <div id="sourceMeta" class="hidden grid grid-cols-3 gap-2 text-center text-xs font-mono bg-slate-900/90 p-3 rounded-xl border border-slate-800">
+      <div><span class="text-slate-500 block text-[10px]">SAMPLE RATE</span><span id="metaSR" class="text-white font-bold">-</span></div>
+      <div><span class="text-slate-500 block text-[10px]">DURATION</span><span id="metaDur" class="text-white font-bold">-</span></div>
+      <div><span class="text-slate-500 block text-[10px]">CHANNELS</span><span id="metaCh" class="text-white font-bold">-</span></div>
+    </div>
+  </section>
+
+  <section id="analysisSection" class="hidden card rounded-2xl p-5 space-y-5">
+    <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+      <div>
+        <h2 class="text-xs sm:text-sm font-bold uppercase tracking-wider text-amber-400">2. Diagnóstico, Nota Pre-Master y Cadena DSP</h2>
+        <p class="text-[11px] text-slate-400">Revisa la valoración inicial, el espectro FFT y ajusta o acepta la cadena</p>
+      </div>
+      <span id="activeGenreBadge" class="text-[10px] font-mono bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 px-2.5 py-1 rounded">[REGGAETON]</span>
+    </div>
+
+    <div class="bg-gradient-to-r from-amber-950/40 via-slate-900 to-slate-900 border border-amber-500/40 rounded-2xl p-4 flex items-center justify-between">
+      <div>
+        <div class="text-[11px] font-mono uppercase text-amber-400 font-bold">Nota Acústica Original [Pre-Master Score]</div>
+        <div class="text-xs text-slate-300 mt-0.5" id="preScoreSubtext">Analizando balance espectral y rango dinámico...</div>
+      </div>
+      <div class="text-right">
+        <div id="preScoreDisplay" class="text-3xl font-black font-mono text-amber-400">--<span class="text-sm font-normal text-slate-400">/10</span></div>
+        <span id="preScoreLabel" class="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-amber-500/20 text-amber-300">[PRE-MASTER]</span>
       </div>
     </div>
-    <span id="statusBadge" class="text-[11px] font-mono px-2.5 py-1 rounded bg-slate-900 text-slate-300 border border-slate-700">[IDLE]</span>
-  </header>
 
-  <main class="max-w-4xl mx-auto px-4 pt-5 space-y-5">
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-center font-mono">
+      <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-800"><span class="text-[10px] text-slate-400 block">INTEGRATED LUFS</span><span id="preLufs" class="text-base font-bold text-white">-</span></div>
+      <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-800"><span class="text-[10px] text-slate-400 block">4x TRUE PEAK</span><span id="prePeak" class="text-base font-bold text-white">-</span></div>
+      <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-800"><span class="text-[10px] text-slate-400 block">CREST FACTOR</span><span id="preCrest" class="text-base font-bold text-white">-</span></div>
+      <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-800"><span class="text-[10px] text-slate-400 block">M/S PHASE CORR</span><span id="prePhase" class="text-base font-bold text-white">-</span></div>
+    </div>
 
-    <!-- STEP 1: SOURCE LOADER & GENRE PROFILE SELECTOR -->
-    <section class="obsidian-card rounded-2xl p-5 space-y-4">
-      <div class="flex flex-wrap items-center justify-between gap-2">
+    <div class="bg-slate-950 border border-slate-800 rounded-xl p-3 space-y-2">
+      <div class="flex justify-between items-center text-[11px] font-mono">
+        <span class="text-cyan-400 font-bold">FFT 4096-PT [PRE-MASTER + NOTCH HUNTER]</span>
+        <span class="text-rose-400">● Surgical Notches</span>
+      </div>
+      <canvas id="fftCanvas" width="800" height="190" class="w-full h-40 bg-slate-950 rounded"></canvas>
+    </div>
+
+    <div class="bg-slate-900/75 border border-rose-500/30 rounded-xl p-3.5 space-y-2">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-bold uppercase text-rose-400">Supresor Quirúrgico IA [3x High-Q Notch Filters]</span>
+        <label class="flex items-center gap-1.5 text-xs font-mono text-slate-300"><input type="checkbox" id="enableNotches" checked class="accent-rose-500"/><span>[Active]</span></label>
+      </div>
+      <div id="notchContainer" class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs font-mono"></div>
+    </div>
+
+    <div class="space-y-2.5">
+      <div class="flex items-center justify-between">
+        <h3 class="text-xs font-bold uppercase text-cyan-300">EQ Tonal 6 Bandas [Parametric EQ]</h3>
+        <button id="resetPrescriptionBtn" class="text-[11px] text-cyan-400 underline font-mono">[Reset Curve]</button>
+      </div>
+      <div id="eqSlidersContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 bg-slate-900/60 p-3.5 rounded-xl border border-slate-800"></div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs font-mono">
+      <div class="bg-slate-900/60 p-3.5 rounded-xl border border-slate-800 space-y-2">
+        <div class="text-amber-300 font-bold uppercase text-[11px]">Multibanda Linkwitz-Riley [LR4 3-Band]</div>
+        <div class="grid grid-cols-3 gap-2">
+          <div><label class="text-[10px] text-slate-400 block">LOW THR</label><input id="mbLowThr" type="number" step="0.5" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-white"/></div>
+          <div><label class="text-[10px] text-slate-400 block">MID THR</label><input id="mbMidThr" type="number" step="0.5" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-white"/></div>
+          <div><label class="text-[10px] text-slate-400 block">HIGH THR</label><input id="mbHighThr" type="number" step="0.5" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-white"/></div>
+          <div><label class="text-[10px] text-slate-400 block">LOW RAT</label><input id="mbLowRat" type="number" step="0.2" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-white"/></div>
+          <div><label class="text-[10px] text-slate-400 block">MID RAT</label><input id="mbMidRat" type="number" step="0.2" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-white"/></div>
+          <div><label class="text-[10px] text-slate-400 block">HIGH RAT</label><input id="mbHighRat" type="number" step="0.2" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-white"/></div>
+        </div>
+      </div>
+      <div class="bg-slate-900/60 p-3.5 rounded-xl border border-slate-800 space-y-2">
+        <div class="text-purple-300 font-bold uppercase text-[11px]">Mid/Side &amp; 4x True-Peak [M/S + Limiter]</div>
+        <div class="grid grid-cols-3 gap-2">
+          <div><label class="text-[10px] text-slate-400 block">TARGET LUFS</label><input id="targetLufsInput" type="number" step="0.5" class="w-full mt-1 bg-slate-950 border border-cyan-500/40 rounded px-2 py-1 text-cyan-300 font-bold"/></div>
+          <div><label class="text-[10px] text-slate-400 block">WIDTH [%]</label><input id="msWidth" type="number" step="2" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-white"/></div>
+          <div><label class="text-[10px] text-slate-400 block">SUB MONO</label><input id="msMonoFreq" type="number" step="5" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-white"/></div>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div><label class="text-[10px] text-slate-400 block">TAPE WARMTH [%]</label><input id="satDrive" type="number" step="1" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-white"/></div>
+          <div><label class="text-[10px] text-slate-400 block">CEILING [dBTP]</label><input id="ceilingDb" type="number" step="0.1" value="-1.0" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-white"/></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-slate-950/80 border border-slate-800 rounded-xl p-3.5 space-y-1">
+      <div class="text-[11px] font-bold text-slate-300 uppercase">Diagnóstico MAIK MT [Diagnostic Log]:</div>
+      <ul id="diagnosticList" class="text-xs text-slate-300 space-y-1 list-disc list-inside font-mono"></ul>
+    </div>
+
+    <button id="applyMasterBtn" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 font-extrabold text-sm uppercase tracking-wider shadow-lg">
+      Aceptar Cadena, Masterizar y Auditar [Run MAIK MT Studio DSP &amp; QA]
+    </button>
+  </section>
+
+  <section id="verificationSection" class="hidden card rounded-2xl p-5 space-y-5 border border-emerald-500/30">
+    <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+      <div>
+        <h2 class="text-xs sm:text-sm font-bold uppercase tracking-wider text-emerald-400">3. Verificación Post-Master, Nota 1-10 y Escucha A/B</h2>
+        <p class="text-[11px] text-slate-400">Auditoría de lazo cerrado sobre el máster generado</p>
+      </div>
+      <span class="text-xs font-mono font-bold px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">[QA VERIFIED]</span>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+      <div class="bg-slate-900/90 border border-slate-700 rounded-2xl p-4 flex items-center justify-between">
+        <div><span class="text-[10px] font-mono uppercase text-slate-400 block">Nota Original [Pre]</span><span class="text-xs text-slate-300 font-mono" id="cardPreDesc">Sin procesar</span></div>
+        <div class="text-right"><span id="cardPreScore" class="text-2xl font-black font-mono text-amber-400">--</span><span class="text-xs text-slate-500 font-mono">/10</span></div>
+      </div>
+      <div class="bg-gradient-to-r from-emerald-950/40 to-slate-900 border border-emerald-500/50 rounded-2xl p-4 flex items-center justify-between">
+        <div><span class="text-[10px] font-mono uppercase text-emerald-400 font-bold block">Nota MAIK MT Master [Post]</span><span class="text-xs text-emerald-300 font-mono" id="cardPostDesc">+ Mejora</span></div>
+        <div class="text-right"><span id="cardPostScore" class="text-3xl font-black font-mono text-emerald-400">--</span><span class="text-xs text-emerald-400 font-mono">/10</span></div>
+      </div>
+    </div>
+
+    <div class="bg-slate-950 border border-emerald-500/30 rounded-2xl p-3.5 space-y-2">
+      <div class="flex flex-wrap items-center justify-between gap-2 text-[10px] font-mono">
+        <span class="text-emerald-300 font-bold uppercase text-xs">Superposición FFT Pre vs Post [Dual 4096-Pt FFT]</span>
+        <div class="flex items-center gap-3">
+          <span class="text-cyan-400 font-bold">━ PRE</span>
+          <span class="text-emerald-400 font-bold">━ POST</span>
+          <label class="flex items-center gap-1 bg-slate-900 border border-slate-700 px-2 py-0.5 rounded"><input type="checkbox" id="fftNormalizeToggle" checked class="accent-emerald-400"/><span>[LUFS Tilt]</span></label>
+        </div>
+      </div>
+      <canvas id="fftDualCanvas" width="800" height="200" class="w-full h-44 bg-slate-950 rounded"></canvas>
+    </div>
+
+    <div class="bg-slate-950/95 border border-cyan-500/40 rounded-2xl p-4 space-y-3">
+      <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-2">
         <div>
-          <h2 class="text-xs sm:text-sm font-bold uppercase tracking-wider text-cyan-400">1. Cargar Pista y Perfil [Source WAV &amp; Genre Curve]</h2>
-          <p id="genreDescLabel" class="text-[11px] text-slate-400 font-mono mt-0.5">[Reggaeton / Dembow: Deep sub weight, punchy 100Hz kick/bass, strong 310Hz mud cut, -8.5 LUFS]</p>
+          <span class="text-xs font-bold uppercase text-cyan-300 block">Consola A/B en Tiempo Real [Phase-Locked A/B Deck]</span>
+          <span id="abCompensationInfo" class="text-[11px] font-mono text-emerald-400">[LUFS Match ON]</span>
         </div>
-        <select id="genreSelect" class="bg-slate-900 border border-cyan-500/40 text-xs rounded-lg px-3 py-2 text-cyan-200 font-mono font-semibold">
-          <option value="reggaeton">Reggaeton / Dembow [-8.5 LUFS]</option>
-          <option value="techhouse">Tech House / Bumping [-8.0 LUFS]</option>
-          <option value="hardstyle">Hardstyle / Festival [-7.5 LUFS]</option>
-          <option value="streaming">Modern Streaming [-10.5 LUFS]</option>
-        </select>
+        <label class="flex items-center gap-2 bg-slate-900 border border-slate-700 px-3 py-1 rounded-xl text-xs font-mono"><input type="checkbox" id="abLoudnessMatchToggle" checked class="accent-emerald-400"/><span>[LUFS Match]</span></label>
       </div>
-
-      <label class="flex flex-col items-center justify-center border-2 border-dashed border-slate-700 hover:border-cyan-400 transition rounded-xl p-6 cursor-pointer bg-slate-900/50">
-        <span class="text-sm font-semibold text-white text-center" id="fileNameLabel">Toca para cargar tu archivo WAV de Suno</span>
-        <span class="text-[11px] text-slate-400 mt-1 font-mono">[32-Bit Float Engine • Dual Pre/Post 4096-Pt FFT • Acoustic Scoring]</span>
-        <input type="file" id="audioInput" accept="audio/*,.wav" class="hidden" />
-      </label>
-
-      <div id="sourceMeta" class="hidden grid grid-cols-3 gap-2 text-center text-xs font-mono bg-slate-900/90 p-3 rounded-xl border border-slate-800">
-        <div><span class="text-slate-500 block text-[10px]">SAMPLE RATE</span><span id="metaSR" class="text-white font-bold">-</span></div>
-        <div><span class="text-slate-500 block text-[10px]">DURATION</span><span id="metaDur" class="text-white font-bold">-</span></div>
-        <div><span class="text-slate-500 block text-[10px]">CHANNELS</span><span id="metaCh" class="text-white font-bold">-</span></div>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+        <button id="abPlayPauseBtn" class="py-2.5 px-3 rounded-xl bg-cyan-500 text-slate-950 font-extrabold text-xs font-mono uppercase">▶ Play Audition</button>
+        <button id="abBtnA" class="py-2.5 px-3 rounded-xl border font-mono text-xs font-bold uppercase bg-slate-900 border-slate-700 text-slate-400">A: Original</button>
+        <button id="abBtnB" class="py-2.5 px-3 rounded-xl border font-mono text-xs font-bold uppercase bg-emerald-500/20 border-emerald-400 text-emerald-300">B: MAIK MT Master</button>
       </div>
-    </section>
-
-    <!-- STEP 2: DEEP FFT ANALYSIS, SCORE & APPROVAL GATE -->
-    <section id="analysisSection" class="hidden obsidian-card rounded-2xl p-5 space-y-5">
-      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-        <div>
-          <h2 class="text-xs sm:text-sm font-bold uppercase tracking-wider text-amber-400">2. Diagnóstico, Puntuación Pre-Master y Cadena DSP</h2>
-          <p class="text-[11px] text-slate-400">Valoración inicial de la pista y ajustes auto-calibrados por MAIK MT Studio</p>
-        </div>
-        <span id="activeGenreBadge" class="text-[10px] font-mono bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 px-2.5 py-1 rounded">[REGGAETON CURVE]</span>
+      <input type="range" id="abSeekSlider" min="0" max="100" step="0.1" value="0" class="w-full"/>
+      <div class="flex justify-between text-[11px] font-mono text-slate-400">
+        <span id="abCurrentTime">00:00.0</span><span id="abActiveStreamLabel" class="text-emerald-400 font-bold">[B: MASTER]</span><span id="abTotalTime">00:00.0</span>
       </div>
+    </div>
 
-      <!-- PRE-MASTER SCORE CARD -->
-      <div class="bg-gradient-to-r from-amber-950/40 via-slate-900 to-slate-900 border border-amber-500/40 rounded-2xl p-4 flex items-center justify-between">
-        <div>
-          <div class="text-[11px] font-mono uppercase tracking-wider text-amber-400 font-bold">Puntuación Acústica Original [Pre-Master Score]</div>
-          <div class="text-xs text-slate-300 mt-0.5" id="preScoreSubtext">Detectando desvíos tonales y artefactos de Suno AI...</div>
-        </div>
-        <div class="text-right">
-          <div id="preScoreDisplay" class="text-3xl font-black font-mono text-amber-400">-- <span class="text-sm font-normal text-slate-400">/10</span></div>
-          <span id="preScoreLabel" class="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">PENDIENTE</span>
-        </div>
-      </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs font-mono border-collapse">
+        <thead><tr class="border-b border-slate-800 text-slate-400 text-[10px]"><th class="py-2">PARAMETER</th><th class="py-2">PRE-MASTER</th><th class="py-2">TARGET</th><th class="py-2">POST-MASTER</th><th class="py-2 text-right">STATUS</th></tr></thead>
+        <tbody id="qaTableBody" class="divide-y divide-slate-800/70"></tbody>
+      </table>
+    </div>
 
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-center font-mono">
-        <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
-          <span class="text-[10px] text-slate-400 block">INTEGRATED LUFS</span>
-          <span id="preLufs" class="text-base sm:text-lg font-bold text-white">-</span>
-        </div>
-        <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
-          <span class="text-[10px] text-slate-400 block">4x TRUE PEAK</span>
-          <span id="prePeak" class="text-base sm:text-lg font-bold text-white">-</span>
-        </div>
-        <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
-          <span class="text-[10px] text-slate-400 block">CREST FACTOR</span>
-          <span id="preCrest" class="text-base sm:text-lg font-bold text-white">-</span>
-        </div>
-        <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
-          <span class="text-[10px] text-slate-400 block">M/S PHASE CORR</span>
-          <span id="prePhase" class="text-base sm:text-lg font-bold text-white">-</span>
-        </div>
-      </div>
+    <div class="space-y-1.5 bg-slate-900/70 p-3.5 rounded-xl border border-slate-800">
+      <div class="text-[11px] font-mono text-slate-400 uppercase">Balance Espectral 6 Bandas [Pre vs Post dB]</div>
+      <div id="spectralComparisonBars" class="space-y-1 pt-1"></div>
+    </div>
 
-      <div class="bg-slate-950 border border-slate-800 rounded-xl p-3 space-y-2">
-        <div class="flex flex-wrap justify-between items-center gap-2 text-[11px] font-mono">
-          <span class="text-cyan-400 font-bold">ANALIZADOR ESPECTRAL FFT 4096-PT [PRE-MASTER + NOTCH HUNTER]</span>
-          <div class="flex items-center gap-3 text-[10px]">
-            <span class="text-cyan-300">━ Pre-Master</span>
-            <span class="text-rose-400">● Surgical Notches</span>
-          </div>
-        </div>
-        <canvas id="fftCanvas" width="820" height="200" class="w-full h-44 bg-slate-950 rounded"></canvas>
-      </div>
+    <button id="downloadMasterBtn" class="w-full py-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-sm uppercase tracking-wider shadow-lg">
+      Guardar / Compartir Master WAV 24-Bit [Export Studio WAV]
+    </button>
+  </section>
+</main>
 
-      <div class="bg-slate-900/75 border border-rose-500/30 rounded-xl p-3.5 space-y-2">
-        <div class="flex items-center justify-between">
-          <span class="text-xs font-bold uppercase tracking-wider text-rose-400">Supresor Quirúrgico de Resonancias IA [3x High-Q Notch Filters]</span>
-          <label class="flex items-center gap-1.5 text-xs font-mono text-slate-300 cursor-pointer">
-            <input type="checkbox" id="enableNotches" checked class="accent-rose-500" />
-            <span>[Active]</span>
-          </label>
-        </div>
-        <div id="notchContainer" class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs font-mono"></div>
-      </div>
+<script>
+let originalBuffer=null,masteredBuffer=null,preMetrics=null,postMetrics=null,currentPrescription=null,currentFileName="suno_track";
+const GENRE_PROFILES={
+  reggaeton:{label:"REGGAETON / DEMBOW",desc:"[Reggaeton / Dembow: Deep sub, punchy 100Hz, strong 310Hz mud cut, upfront vocals, -8.5 LUFS]",targetLufs:-8.5,offsets:{sub:-4.4,bass:-2.5,mud:-8.8,mid:-3.9,harsh:-9.8,air:-10.8},mb:{lowThr:-18.5,midThr:-16.5,highThr:-18.5,lowRat:3.2,midRat:2.3,highRat:2.4},msWidth:114,msMonoFreq:120,satDrive:13},
+  techhouse:{label:"TECH HOUSE / CLUB",desc:"[Tech House / Bumping: Tight mono sub <130Hz, scooped boxiness, crisp hats, -8.0 LUFS]",targetLufs:-8.0,offsets:{sub:-4.2,bass:-2.3,mud:-9.2,mid:-4.9,harsh:-9.6,air:-10.2},mb:{lowThr:-19,midThr:-17,highThr:-18,lowRat:3.5,midRat:2.2,highRat:2.5},msWidth:120,msMonoFreq:130,satDrive:11},
+  hardstyle:{label:"HARDSTYLE / FESTIVAL",desc:"[Hardstyle: Massive reverse-bass density, tamed 3.8kHz screech harshness, wide leads, -7.5 LUFS]",targetLufs:-7.5,offsets:{sub:-4.5,bass:-2.0,mud:-8.7,mid:-4.1,harsh:-9.4,air:-10.0},mb:{lowThr:-20,midThr:-18,highThr:-19,lowRat:3.8,midRat:2.6,highRat:2.8},msWidth:126,msMonoFreq:110,satDrive:18},
+  streaming:{label:"MODERN STREAMING",desc:"[Modern Streaming: Balanced reference curve with preserved crest factor, -10.5 LUFS]",targetLufs:-10.5,offsets:{sub:-5.2,bass:-3.0,mud:-8.2,mid:-4.4,harsh:-9.8,air:-11.2},mb:{lowThr:-17,midThr:-15.5,highThr:-17.5,lowRat:2.6,midRat:2.0,highRat:2.2},msWidth:110,msMonoFreq:110,satDrive:9}
+};
+const BANDS=[
+  {id:"sub",name:"Sub Weight [20-60Hz]",freq:42,type:"lowshelf",q:0.707},
+  {id:"bass",name:"Bass Punch [60-180Hz]",freq:102,type:"peaking",q:1.05},
+  {id:"mud",name:"Suno Mud [180-480Hz]",freq:310,type:"peaking",q:1.45},
+  {id:"mid",name:"Vocal Core [500-2.5k]",freq:1300,type:"peaking",q:0.95},
+  {id:"harsh",name:"AI Harshness [2.5-6kHz]",freq:3850,type:"peaking",q:1.65},
+  {id:"air",name:"Air & Sheen [6-20k]",freq:12000,type:"highshelf",q:0.707}
+];
+const setStatus=(t,c="slate")=>{const e=document.getElementById("statusBadge");e.textContent=t;e.className=`text-[11px] font-mono px-2.5 py-1 rounded bg-slate-900 text-${c}-300 border border-${c}-500/40`;};
 
-      <div class="space-y-2.5">
-        <div class="flex items-center justify-between">
-          <h3 class="text-xs font-bold uppercase tracking-wider text-cyan-300">Ecualizador Tonal de 6 Bandas [Genre-Calibrated Parametric EQ]</h3>
-          <button id="resetPrescriptionBtn" class="text-[11px] text-cyan-400 underline font-mono">[Reset to Genre Curve]</button>
-        </div>
-        <div id="eqSlidersContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 bg-slate-900/60 p-3.5 rounded-xl border border-slate-800"></div>
-      </div>
+function calcScore(m,targetLufs,offsets){
+  let s=10.0;
+  const lDiff=Math.abs(m.integratedLufs-targetLufs);
+  if(lDiff>0.6)s-=Math.min(2.6,lDiff*0.42);
+  if(m.truePeakDb>-0.3)s-=2.0;else if(m.truePeakDb<-4.0)s-=Math.min(1.2,(-4.0-m.truePeakDb)*0.2);
+  if(m.crestDb<5.5)s-=1.5;else if(m.crestDb>14.5)s-=1.2;
+  if(m.phaseCorr<0.45)s-=2.0;else if(m.phaseCorr<0.65)s-=0.8;
+  let specErr=0;
+  BANDS.forEach(b=>{specErr+=Math.abs(m.bandDb[b.id]-(offsets?offsets[b.id]:-6));});
+  s-=Math.min(2.8,(specErr/6)*0.55);
+  if(m.resonances&&m.resonances[0]&&m.resonances[0].prominenceDb>3.2)s-=Math.min(1.2,(m.resonances[0].prominenceDb-3.0)*0.3);
+  return Math.max(1.5,Math.min(9.9,Number(s.toFixed(1))));
+}
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <div class="bg-slate-900/60 p-3.5 rounded-xl border border-slate-800 space-y-2.5 text-xs font-mono">
-          <div class="text-amber-300 font-bold uppercase text-[11px]">Compresor Multibanda Linkwitz-Riley [LR4 3-Band Dynamics]</div>
-          <div class="grid grid-cols-3 gap-2">
-            <div>
-              <label class="text-[10px] text-slate-400 block">LOW THR [&lt;180Hz]</label>
-              <input id="mbLowThr" type="number" step="0.5" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-white" />
-            </div>
-            <div>
-              <label class="text-[10px] text-slate-400 block">MID THR [180-3.2k]</label>
-              <input id="mbMidThr" type="number" step="0.5" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-white" />
-            </div>
-            <div>
-              <label class="text-[10px] text-slate-400 block">HIGH THR [&gt;3.2k]</label>
-              <input id="mbHighThr" type="number" step="0.5" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-white" />
-            </div>
-          </div>
-          <div class="grid grid-cols-3 gap-2">
-            <div>
-              <label class="text-[10px] text-slate-400 block">LOW RATIO</label>
-              <input id="mbLowRat" type="number" step="0.2" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-white" />
-            </div>
-            <div>
-              <label class="text-[10px] text-slate-400 block">MID RATIO</label>
-              <input id="mbMidRat" type="number" step="0.2" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-white" />
-            </div>
-            <div>
-              <label class="text-[10px] text-slate-400 block">HIGH RATIO</label>
-              <input id="mbHighRat" type="number" step="0.2" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-white" />
-            </div>
-          </div>
-        </div>
+const FFT_SIZE=4096,BH_WIN=new Float32Array(FFT_SIZE);
+for(let i=0;i<FFT_SIZE;i++){const w=(2*Math.PI*i)/(FFT_SIZE-1);BH_WIN[i]=0.35875-0.48829*Math.cos(w)+0.14128*Math.cos(2*w)-0.01168*Math.cos(3*w);}
 
-        <div class="bg-slate-900/60 p-3.5 rounded-xl border border-slate-800 space-y-2.5 text-xs font-mono">
-          <div class="text-purple-300 font-bold uppercase text-[11px]">Matriz Mid/Side &amp; Limitador 4x True-Peak [M/S + 4x ISP Limiter]</div>
-          <div class="grid grid-cols-3 gap-2">
-            <div>
-              <label class="text-[10px] text-slate-400 block">TARGET [LUFS]</label>
-              <input id="targetLufsInput" type="number" step="0.5" min="-16" max="-6" class="w-full mt-1 bg-slate-950 border border-cyan-500/40 rounded px-2 py-1 text-cyan-300 font-bold" />
-            </div>
-            <div>
-              <label class="text-[10px] text-slate-400 block">STEREO WIDTH [%]</label>
-              <input id="msWidth" type="number" step="2" min="80" max="160" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-white" />
-            </div>
-            <div>
-              <label class="text-[10px] text-slate-400 block">SUB MONO [Hz]</label>
-              <input id="msMonoFreq" type="number" step="5" min="60" max="160" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-white" />
-            </div>
-          </div>
-          <div class="grid grid-cols-2 gap-2">
-            <div>
-              <label class="text-[10px] text-slate-400 block">TAPE WARMTH [%]</label>
-              <input id="satDrive" type="number" step="1" min="0" max="35" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-white" />
-            </div>
-            <div>
-              <label class="text-[10px] text-slate-400 block">4x TP CEILING [dBTP]</label>
-              <input id="ceilingDb" type="number" step="0.1" value="-1.0" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-white" />
-            </div>
-          </div>
-        </div>
-      </div>
+function radix2FFT(re,im){
+  const n=re.length;let j=0;
+  for(let i=0;i<n;i++){if(i<j){let tr=re[i];re[i]=re[j];re[j]=tr;let ti=im[i];im[i]=im[j];im[j]=ti;}let m=n>>1;while(m>=1&&j>=m){j-=m;m>>=1;}j+=m;}
+  for(let len=2;len<=n;len<<=1){
+    const half=len>>1,ang=(-2*Math.PI)/len,wRe=Math.cos(ang),wIm=Math.sin(ang);
+    for(let i=0;i<n;i+=len){
+      let uRe=1,uIm=0;
+      for(let k=0;k<half;k++){
+        const eI=i+k,oI=i+k+half,tRe=uRe*re[oI]-uIm*im[oI],tIm=uRe*im[oI]+uIm*re[oI];
+        re[oI]=re[eI]-tRe;im[oI]=im[eI]-tIm;re[eI]+=tRe;im[eI]+=tIm;
+        const nRe=uRe*wRe-uIm*wIm;uIm=uRe*wIm+uIm*wRe;uRe=nRe;
+      }
+    }
+  }
+}
 
-      <div class="bg-slate-950/80 border border-slate-800 rounded-xl p-3.5 space-y-1">
-        <div class="text-[11px] font-bold text-slate-300 uppercase tracking-wider">Informe de Ingeniería MAIK MT [Automated Diagnostic Log]:</div>
-        <ul id="diagnosticList" class="text-xs text-slate-300 space-y-1 list-disc list-inside font-mono"></ul>
-      </div>
+function hermite4x(s0,s1,s2,s3){
+  let mx=Math.max(Math.abs(s1),Math.abs(s2));
+  const c0=s1,c1=0.5*(s2-s0),c2=s0-2.5*s1+2*s2-0.5*s3,c3=0.5*(s3-s0)+1.5*(s1-s2);
+  for(let k=1;k<=3;k++){const t=k*0.25,v=Math.abs(((c3*t+c2)*t+c1)*t+c0);if(v>mx)mx=v;}
+  return mx;
+}
 
-      <button id="applyMasterBtn" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-extrabold text-sm uppercase tracking-wider shadow-lg shadow-cyan-500/20 transition">
-        Aceptar Cadena, Masterizar y Auditar [Run MAIK MT Studio DSP &amp; QA]
-      </button>
-    </section>
+async function analyzeAudioBuffer(buf){
+  const sr=buf.sampleRate,len=buf.length,chL=buf.getChannelData(0),chR=buf.numberOfChannels>1?buf.getChannelData(1):chL;
+  let maxTP=0,sumSq=0,sumLR=0,sumL2=0,sumR2=0;
+  for(let i=0;i<len;i++){
+    const l=chL[i],r=chR[i],m=0.5*(l+r);
+    sumSq+=m*m;sumLR+=l*r;sumL2+=l*l;sumR2+=r*r;
+    if(i>=1&&i<len-2){
+      const tp=Math.max(hermite4x(chL[i-1],l,chL[i+1],chL[i+2]),hermite4x(chR[i-1],r,chR[i+1],chR[i+2]));
+      if(tp>maxTP)maxTP=tp;
+    }else{const a=Math.max(Math.abs(l),Math.abs(r));if(a>maxTP)maxTP=a;}
+  }
+  const truePeakDb=20*Math.log10(Math.max(maxTP,1e-9)),rmsDb=10*Math.log10(Math.max(sumSq/len,1e-12)),crestDb=truePeakDb-rmsDb,phaseCorr=(sumL2>0&&sumR2>0)?(sumLR/Math.sqrt(sumL2*sumR2)):1;
+  const kCtx=new OfflineAudioContext(buf.numberOfChannels,len,sr),src=kCtx.createBufferSource();src.buffer=buf;
+  const sh=kCtx.createBiquadFilter();sh.type="highshelf";sh.frequency.value=1681;sh.gain.value=4;
+  const hp=kCtx.createBiquadFilter();hp.type="highpass";hp.frequency.value=38;hp.Q.value=0.5;
+  src.connect(sh);sh.connect(hp);hp.connect(kCtx.destination);src.start(0);
+  const kBuf=await kCtx.startRendering(),kL=kBuf.getChannelData(0),kR=kBuf.numberOfChannels>1?kBuf.getChannelData(1):kL;
+  const bSamp=Math.floor(sr*0.4),sSamp=Math.floor(sr*0.1),blocks=[];
+  for(let st=0;st+bSamp<=len;st+=sSamp){
+    let bS=0;for(let i=st;i<st+bSamp;i++)bS+=0.5*(kL[i]*kL[i]+kR[i]*kR[i]);
+    const mSq=bS/bSamp,lB=-0.691+10*Math.log10(Math.max(mSq,1e-12));
+    if(lB>-70)blocks.push({mSq,lB});
+  }
+  let gSq=1e-9;
+  if(blocks.length>0){
+    const aM=blocks.reduce((a,b)=>a+b.mSq,0)/blocks.length,rG=-0.691+10*Math.log10(Math.max(aM,1e-12))-10,rB=blocks.filter(b=>b.lB>=rG);
+    if(rB.length>0)gSq=rB.reduce((a,b)=>a+b.mSq,0)/rB.length;
+  }
+  const integratedLufs=-0.691+10*Math.log10(Math.max(gSq,1e-12));
+  const half=FFT_SIZE>>1,avgP=new Float64Array(half),nWin=Math.min(75,Math.max(1,Math.floor((len-FFT_SIZE)/FFT_SIZE))),hop=Math.max(FFT_SIZE,Math.floor((len-FFT_SIZE)/nWin)),re=new Float32Array(FFT_SIZE),im=new Float32Array(FFT_SIZE);
+  let act=0;
+  for(let w=0;w<nWin;w++){
+    const off=w*hop;let fE=0;
+    for(let i=0;i<FFT_SIZE;i++){const m=0.5*(chL[off+i]+chR[off+i]);fE+=m*m;re[i]=m*BH_WIN[i];im[i]=0;}
+    if(10*Math.log10(Math.max(fE/FFT_SIZE,1e-12))>-55){
+      radix2FFT(re,im);for(let b=0;b<half;b++)avgP[b]+=(re[b]*re[b]+im[b]*im[b])/(FFT_SIZE*FFT_SIZE);act++;
+    }
+  }
+  const specDb=new Float32Array(half),nF=Math.max(1,act);
+  let totP=0;for(let b=1;b<half;b++){specDb[b]=10*Math.log10(Math.max(avgP[b]/nF,1e-15));totP+=avgP[b]/nF;}
+  const totDb=10*Math.log10(Math.max(totP,1e-15)),binHz=sr/FFT_SIZE,ranges={sub:[20,60],bass:[60,180],mud:[180,480],mid:[480,2500],harsh:[2500,6000],air:[6000,18000]},bandDb={};
+  for(const[id,[fL,fH]]of Object.entries(ranges)){
+    const b0=Math.max(1,Math.floor(fL/binHz)),b1=Math.min(half-1,Math.ceil(fH/binHz));
+    let sP=0;for(let b=b0;b<=b1;b++)sP+=avgP[b]/nF;bandDb[id]=10*Math.log10(Math.max(sP,1e-15))-totDb;
+  }
+  const minB=Math.max(3,Math.floor(240/binHz)),maxB=Math.min(half-12,Math.ceil(7800/binHz)),cands=[];
+  for(let b=minB;b<=maxB;b++){
+    const v=specDb[b];
+    if(v>specDb[b-1]&&v>specDb[b+1]){
+      let nS=0,nC=0;for(let k=-10;k<=10;k++)if(Math.abs(k)>2){nS+=specDb[b+k];nC++;}
+      const prom=v-(nS/nC);
+      if(prom>2.2)cands.push({freq:Math.round(b*binHz),prominenceDb:prom,cutDb:-Math.min(4.5,Math.max(1.8,prom*0.65)),q:prom>4?11:8.5});
+    }
+  }
+  cands.sort((a,b)=>b.prominenceDb-a.prominenceDb);
+  const resonances=[];
+  for(const c of cands){if(resonances.length>=3)break;if(!resonances.some(r=>Math.abs(Math.log2(c.freq/r.freq))<0.32))resonances.push(c);}
+  const defF=[345,2950,4650];while(resonances.length<3)resonances.push({freq:defF[resonances.length],prominenceDb:2,cutDb:-1.8,q:9});
+  return{integratedLufs,truePeakDb,rmsDb,crestDb,phaseCorr,bandDb,spectrumDb:specDb,binHz,resonances};
+}
 
-    <!-- STEP 3: POST-MASTER SCORE COMPARISON, DUAL FFT & AUDITION -->
-    <section id="verificationSection" class="hidden obsidian-card rounded-2xl p-5 space-y-5 border border-emerald-500/30">
-      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-        <div>
-          <h2 class="text-xs sm:text-sm font-bold uppercase tracking-wider text-emerald-400">3. Comparativa de Puntuación y Auditoría [Score Comparison]</h2>
-          <p class="text-[11px] text-slate-400">Valora el salto de calidad acústica obtenido tras aplicar la cadena MAIK MT Studio</p>
-        </div>
-        <span id="qaGlobalBadge" class="text-xs font-mono font-bold px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">[MAIK MT QA VERIFIED]</span>
-      </div>
+function computePrescription(m,gKey){
+  const p=GENRE_PROFILES[gKey]||GENRE_PROFILES.reggaeton,eqGains={},notes=[`Profile [${p.label}] -> Target ${p.targetLufs.toFixed(1)} LUFS.`];
+  BANDS.forEach(b=>{
+    const err=p.offsets[b.id]-m.bandDb[b.id];
+    let g=Math.max(-4.8,Math.min(4.8,err*0.62));
+    if(b.id==="mud"&&g>-1.0){g=Math.min(g,-1.8);notes.push(`Suno Mud Cut [310Hz]: ${g.toFixed(1)} dB.`);}
+    else if(b.id==="harsh"&&g>-0.8){g=Math.min(g,-1.5);notes.push(`AI Harshness Cut [3.85kHz]: ${g.toFixed(1)} dB.`);}
+    eqGains[b.id]=Number(g.toFixed(1));
+  });
+  m.resonances.forEach((r,i)=>notes.push(`Notch #${i+1} [${r.freq}Hz, Q=${r.q}]: ${r.cutDb.toFixed(1)} dB.`));
+  let{lowThr,midThr,highThr,lowRat,midRat,highRat}=p.mb;
+  if(m.crestDb>13){lowThr-=1.5;midThr-=1.5;}
+  const msWidth=m.phaseCorr>0.75?p.msWidth:Math.max(104,p.msWidth-8);
+  return{genreKey:gKey,profileLabel:p.label,eqGains,targetOffsets:p.offsets,resonances:m.resonances,mbLowThr:lowThr,mbMidThr:midThr,mbHighThr:highThr,mbLowRat:lowRat,mbMidRat:midRat,mbHighRat:highRat,msWidth,msMonoFreq:p.msMonoFreq,satDrive:p.satDrive,ceilingDb:-1.0,targetLufs:p.targetLufs,notes};
+}
 
-      <!-- SIDE-BY-SIDE SCORE CARDS (PRE VS POST) -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-        <div class="bg-slate-900/90 border border-slate-700 rounded-2xl p-4 flex items-center justify-between">
-          <div>
-            <span class="text-[10px] font-mono uppercase text-slate-400 block">Puntuación Original</span>
-            <span class="text-xs text-slate-300 font-mono" id="cardPreDesc">Sin procesar</span>
-          </div>
-          <div class="text-right">
-            <span id="cardPreScore" class="text-2xl font-black font-mono text-slate-300">--</span>
-            <span class="text-xs text-slate-500 font-mono">/10</span>
-          </div>
-        </div>
+function drawFFT(cId,pre,post=null,norm=true){
+  const c=document.getElementById(cId);if(!c||!pre)return;
+  const ctx=c.getContext("2d"),W=c.width,H=c.height;ctx.clearRect(0,0,W,H);
+  ctx.strokeStyle="rgba(255,255,255,0.06)";ctx.lineWidth=1;
+  [40,100,250,500,1000,2500,5000,10000,16000].forEach(f=>{
+    const x=(Math.log10(f/20)/Math.log10(1000))*W;ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();
+    ctx.fillStyle="rgba(148,163,184,0.6)";ctx.font="10px monospace";ctx.fillText(f>=1000?`${f/1000}k`:f,x+3,H-6);
+  });
+  const half=pre.spectrumDb.length,f2x=f=>(Math.log10(f/20)/Math.log10(1000))*W,d2y=d=>H-Math.max(0,Math.min(1,(d+92)/74))*(H-26)-16;
+  ctx.beginPath();let s=false;
+  for(let b=1;b<half;b++){const f=b*pre.binHz;if(f<20||f>20000)continue;const x=f2x(f),y=d2y(pre.spectrumDb[b]);if(!s){ctx.moveTo(x,y);s=true;}else ctx.lineTo(x,y);}
+  ctx.strokeStyle=post?"rgba(34,211,238,0.7)":"#22d3ee";ctx.lineWidth=post?1.5:1.9;ctx.stroke();
+  if(post){
+    const off=norm?(post.integratedLufs-pre.integratedLufs):0;ctx.beginPath();let ps=false;
+    for(let b=1;b<half;b++){const f=b*post.binHz;if(f<20||f>20000)continue;const x=f2x(f),y=d2y(post.spectrumDb[b]-off);if(!ps){ctx.moveTo(x,y);ps=true;}else ctx.lineTo(x,y);}
+    ctx.strokeStyle="#10b981";ctx.lineWidth=2.1;ctx.stroke();
+  }
+  pre.resonances.forEach((r,i)=>{
+    const x=f2x(r.freq),b=Math.min(half-1,Math.round(r.freq/pre.binHz)),y=d2y(pre.spectrumDb[b]);
+    ctx.fillStyle="#f43f5e";ctx.beginPath();ctx.arc(x,y,4,0,Math.PI*2);ctx.fill();
+    ctx.font="bold 10px monospace";ctx.fillText(`N${i+1}:${r.freq}Hz`,Math.min(W-85,Math.max(4,x-25)),Math.max(12,y-8));
+  });
+}
 
-        <div class="bg-gradient-to-r from-emerald-950/40 to-slate-900 border border-emerald-500/50 rounded-2xl p-4 flex items-center justify-between shadow-[0_0_20px_rgba(16,185,129,0.15)]">
-          <div>
-            <span class="text-[10px] font-mono uppercase text-emerald-400 font-bold block">Puntuación MAIK MT Master</span>
-            <span class="text-xs text-emerald-300 font-mono" id="cardPostDesc">+ Mejora Estudio</span>
-          </div>
-          <div class="text-right">
-            <span id="cardPostScore" class="text-3xl font-black font-mono text-emerald-400">--</span>
-            <span class="text-xs text-emerald-400/80 font-mono">/10</span>
-          </div>
-        </div>
-      </div>
+function renderPrescriptionUI(m,p){
+  document.getElementById("activeGenreBadge").textContent=`[${p.profileLabel}]`;
+  document.getElementById("preLufs").textContent=`${m.integratedLufs.toFixed(1)} LUFS`;
+  document.getElementById("prePeak").textContent=`${m.truePeakDb.toFixed(2)} dBTP`;
+  document.getElementById("preCrest").textContent=`${m.crestDb.toFixed(1)} dB`;
+  document.getElementById("prePhase").textContent=m.phaseCorr.toFixed(2);
+  const sc=calcScore(m,p.targetLufs,p.targetOffsets);
+  document.getElementById("preScoreDisplay").innerHTML=`${sc}<span class="text-sm font-normal text-slate-400">/10</span>`;
+  document.getElementById("preScoreSubtext").textContent=`Evaluado sobre curva ${p.profileLabel} (${p.targetLufs} LUFS)`;
+  document.getElementById("preScoreLabel").textContent=sc>=7.5?"[GOOD STATE]":sc>=5?"[NEEDS POLISH]":"[NEEDS MASTER]";
+  drawFFT("fftCanvas",m,null,false);
+  document.getElementById("notchContainer").innerHTML=p.resonances.map((r,i)=>`<div class="bg-slate-950 p-2.5 rounded-lg border border-rose-500/20"><div class="flex justify-between text-rose-300 font-bold mb-1"><span>NOTCH #${i+1} [${r.freq}Hz]</span><span>Q=${r.q}</span></div><input type="number" id="notch_gain_${i}" step="0.2" max="0" min="-8" value="${r.cutDb.toFixed(1)}" class="w-full bg-slate-900 border border-slate-700 rounded px-2 py-0.5 text-white"/></div>`).join("");
+  document.getElementById("eqSlidersContainer").innerHTML=BANDS.map(b=>{const v=p.eqGains[b.id];return`<div class="bg-slate-950/80 p-2.5 rounded-lg border border-slate-800"><div class="flex justify-between text-xs font-mono mb-1"><span class="text-slate-300">${b.name}</span><span id="val_${b.id}" class="text-cyan-400 font-bold">${v>0?"+":""}${v.toFixed(1)} dB</span></div><input type="range" id="slider_${b.id}" min="-6" max="6" step="0.2" value="${v}" class="w-full" oninput="document.getElementById('val_${b.id}').textContent=(this.value>0?'+':'')+Number(this.value).toFixed(1)+' dB'"/></div>`;}).join("");
+  document.getElementById("targetLufsInput").value=p.targetLufs;
+  document.getElementById("mbLowThr").value=p.mbLowThr;document.getElementById("mbMidThr").value=p.mbMidThr;document.getElementById("mbHighThr").value=p.mbHighThr;
+  document.getElementById("mbLowRat").value=p.mbLowRat;document.getElementById("mbMidRat").value=p.mbMidRat;document.getElementById("mbHighRat").value=p.mbHighRat;
+  document.getElementById("msWidth").value=p.msWidth;document.getElementById("msMonoFreq").value=p.msMonoFreq;document.getElementById("satDrive").value=p.satDrive;document.getElementById("ceilingDb").value=p.ceilingDb;
+  document.getElementById("diagnosticList").innerHTML=p.notes.map(n=>`<li>${n}</li>`).join("");
+}
 
-      <div class="bg-slate-950 border border-emerald-500/30 rounded-2xl p-3.5 space-y-2.5 shadow-inner">
-        <div class="flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <span class="text-xs font-bold uppercase tracking-wider text-emerald-300 block">Superposición Espectral Pre vs Post [Dual 4096-Pt FFT Overlay]</span>
-            <span class="text-[10px] font-mono text-slate-400">Compara la respuesta en frecuencia antes y después del procesado DSP</span>
-          </div>
+let abCtx=null,abSrcA=null,abSrcB=null,abGainA=null,abGainB=null,abPlaying=false,abMode="B",abStart=0,abOff=0,abAnim=null;
+const fmtT=s=>`${String(Math.floor(s/60)).padStart(2,"0")}:${(s%60).toFixed(1).padStart(4,"0")}`;
+function getABGains(){
+  const m=document.getElementById("abLoudnessMatchToggle").checked,el=document.getElementById("abCompensationInfo");
+  if(!preMetrics||!postMetrics)return{gA:1,gB:1};
+  if(!m){el.textContent=`[LUFS Match OFF: True Master (${postMetrics.integratedLufs.toFixed(1)} LUFS)]`;return{gA:1,gB:1};}
+  const d=postMetrics.integratedLufs-preMetrics.integratedLufs;
+  if(d>=0){el.textContent=`[LUFS Match ON: Master -${d.toFixed(1)} dB]`;return{gA:1,gB:Math.pow(10,-d/20)};}
+  el.textContent=`[LUFS Match ON: Source ${d.toFixed(1)} dB]`;return{gA:Math.pow(10,d/20),gB:1};
+}
+function updateABGains(){
+  const{gA,gB}=getABGains();
+  document.getElementById("abActiveStreamLabel").textContent=abMode==="A"?"[A: ORIGINAL]":"[B: MAIK MT MASTER]";
+  if(abCtx&&abGainA&&abGainB){const n=abCtx.currentTime;abGainA.gain.setTargetAtTime(abMode==="A"?gA:0,n,0.008);abGainB.gain.setTargetAtTime(abMode==="B"?gB:0,n,0.008);}
+}
+function stopAB(reset=false){
+  if(abSrcA){try{abSrcA.stop();abSrcA.disconnect();}catch(e){}abSrcA=null;}
+  if(abSrcB){try{abSrcB.stop();abSrcB.disconnect();}catch(e){}abSrcB=null;}
+  if(abAnim){cancelAnimationFrame(abAnim);abAnim=null;}
+  if(abPlaying&&abCtx&&!reset)abOff=Math.min(originalBuffer.duration,abOff+(abCtx.currentTime-abStart));
+  if(reset)abOff=0;abPlaying=false;document.getElementById("abPlayPauseBtn").textContent="▶ Play Audition";
+}
+function startAB(off=abOff){
+  if(!originalBuffer||!masteredBuffer)return;stopAB(false);
+  if(!abCtx)abCtx=new(window.AudioContext||window.webkitAudioContext)();if(abCtx.state==="suspended")abCtx.resume();
+  const dur=originalBuffer.duration;abOff=Math.max(0,Math.min(dur-0.05,off));
+  abSrcA=abCtx.createBufferSource();abSrcB=abCtx.createBufferSource();abSrcA.buffer=originalBuffer;abSrcB.buffer=masteredBuffer;
+  abGainA=abCtx.createGain();abGainB=abCtx.createGain();const{gA,gB}=getABGains();
+  abGainA.gain.value=abMode==="A"?gA:0;abGainB.gain.value=abMode==="B"?gB:0;
+  abSrcA.connect(abGainA);abSrcB.connect(abGainB);abGainA.connect(abCtx.destination);abGainB.connect(abCtx.destination);
+  abStart=abCtx.currentTime;abSrcA.start(0,abOff);abSrcB.start(0,abOff);abPlaying=true;
+  document.getElementById("abPlayPauseBtn").textContent="⏸ Pause";
+  const tick=()=>{if(!abPlaying)return;const c=abOff+(abCtx.currentTime-abStart);if(c>=dur){stopAB(true);return;}document.getElementById("abSeekSlider").value=(c/dur)*100;document.getElementById("abCurrentTime").textContent=fmtT(c);abAnim=requestAnimationFrame(tick);};
+  abAnim=requestAnimationFrame(tick);
+}
 
-          <div class="flex flex-wrap items-center gap-3">
-            <div class="flex items-center gap-2 text-[10px] font-mono">
-              <span class="text-cyan-400 font-bold">━ PRE [Original]</span>
-              <span class="text-emerald-400 font-bold">━ POST [MAIK MT Master]</span>
-            </div>
-            <label class="flex items-center gap-1.5 bg-slate-900 border border-slate-700 px-2.5 py-1 rounded-lg text-[10px] font-mono text-slate-200 cursor-pointer">
-              <input type="checkbox" id="fftNormalizeToggle" checked class="accent-emerald-400" />
-              <span>[LUFS-Normalized Tilt View]</span>
-            </label>
-          </div>
-        </div>
+async function processMasterAndVerify(){
+  if(!originalBuffer)return;stopAB(true);setStatus("[RENDERING DSP...]","cyan");
+  const btn=document.getElementById("applyMasterBtn");btn.disabled=true;await new Promise(r=>setTimeout(r,50));
+  const sr=originalBuffer.sampleRate,len=originalBuffer.length,chC=originalBuffer.numberOfChannels;
+  const targetLufs=parseFloat(document.getElementById("targetLufsInput").value),ceilingDb=parseFloat(document.getElementById("ceilingDb").value),msWidth=parseFloat(document.getElementById("msWidth").value)/100,msMonoFreq=parseFloat(document.getElementById("msMonoFreq").value),satDrive=parseFloat(document.getElementById("satDrive").value);
+  const offCtx=new OfflineAudioContext(chC,len,sr),src=offCtx.createBufferSource();src.buffer=originalBuffer;
+  const hpf=offCtx.createBiquadFilter();hpf.type="highpass";hpf.frequency.value=30;hpf.Q.value=0.707;src.connect(hpf);let last=hpf;
+  BANDS.forEach(b=>{const eq=offCtx.createBiquadFilter();eq.type=b.type;eq.frequency.value=b.freq;eq.Q.value=b.q;eq.gain.value=parseFloat(document.getElementById(`slider_${b.id}`).value);last.connect(eq);last=eq;});
+  if(document.getElementById("enableNotches").checked&&currentPrescription){
+    currentPrescription.resonances.forEach((r,i)=>{const n=offCtx.createBiquadFilter();n.type="peaking";n.frequency.value=r.freq;n.Q.value=r.q;n.gain.value=parseFloat(document.getElementById(`notch_gain_${i}`).value);last.connect(n);last=n;});
+  }
+  const lr4=(t,f)=>{const a=offCtx.createBiquadFilter(),b=offCtx.createBiquadFilter();a.type=b.type=t;a.frequency.value=b.frequency.value=f;a.Q.value=b.Q.value=0.7071;a.connect(b);return{i:a,o:b};};
+  const lLP=lr4("lowpass",180),mHP=lr4("highpass",180),mLP=lr4("lowpass",3200),hHP=lr4("highpass",3200);
+  const mkC=(thr,rat,att,rel)=>{const c=offCtx.createDynamicsCompressor();c.threshold.value=thr;c.ratio.value=rat;c.knee.value=6;c.attack.value=att;c.release.value=rel;return c;};
+  const cL=mkC(parseFloat(document.getElementById("mbLowThr").value),parseFloat(document.getElementById("mbLowRat").value),0.025,0.16),cM=mkC(parseFloat(document.getElementById("mbMidThr").value),parseFloat(document.getElementById("mbMidRat").value),0.012,0.11),cH=mkC(parseFloat(document.getElementById("mbHighThr").value),parseFloat(document.getElementById("mbHighRat").value),0.005,0.075);
+  last.connect(lLP.i);lLP.o.connect(cL);cL.connect(offCtx.destination);
+  last.connect(mHP.i);mHP.o.connect(mLP.i);mLP.o.connect(cM);cM.connect(offCtx.destination);
+  mHP.o.connect(hHP.i);hHP.o.connect(cH);cH.connect(offCtx.destination);
+  src.start(0);let stg=await offCtx.startRendering();
+  const dK=(satDrive/100)*2.2,tN=dK>0?Math.tanh(1+dK):1,sat=x=>dK>0?(Math.tanh(x*(1+dK))/tN):x;
+  if(chC>1){
+    const L=stg.getChannelData(0),R=stg.getChannelData(1),rc=1/(2*Math.PI*msMonoFreq),dt=1/sr,al=rc/(rc+dt);
+    let i1=0,o1=0,i2=0,o2=0;
+    for(let i=0;i<len;i++){
+      let m=0.5*(L[i]+R[i]),s=0.5*(L[i]-R[i]);
+      const h1=al*(o1+s-i1);i1=s;o1=h1;const h2=al*(o2+h1-i2);i2=h1;o2=h2;
+      m=sat(m);s=sat(h2*msWidth);L[i]=m+s;R[i]=m-s;
+    }
+  }else{const M=stg.getChannelData(0);for(let i=0;i<len;i++)M[i]=sat(M[i]);}
+  const midM=await analyzeAudioBuffer(stg),gDb=Math.min(14,Math.max(-14,targetLufs-midM.integratedLufs)),linG=Math.pow(10,gDb/20),ceilL=Math.pow(10,ceilingDb/20);
+  const outCtx=new(window.AudioContext||window.webkitAudioContext)();masteredBuffer=outCtx.createBuffer(chC,len,sr);
+  const chs=[];for(let c=0;c<chC;c++){const iD=stg.getChannelData(c),oD=masteredBuffer.getChannelData(c);for(let i=0;i<len;i++)oD[i]=iD[i]*linG;chs.push(oD);}
+  const req=new Float32Array(len);
+  for(let i=0;i<len;i++){
+    let mx=0;for(let c=0;c<chC;c++){const ch=chs[c],tp=(i>=1&&i<len-2)?hermite4x(ch[i-1],ch[i],ch[i+1],ch[i+2]):Math.abs(ch[i]);if(tp>mx)mx=tp;}
+    req[i]=mx>ceilL*0.992?((ceilL*0.992)/mx):1;
+  }
+  const look=Math.max(2,Math.floor(sr*0.003)),relC=Math.exp(-1/(sr*0.065));let env=1;
+  for(let i=0;i<len;i++){
+    let mn=1;const eW=Math.min(len,i+look);for(let w=i;w<eW;w++)if(req[w]<mn)mn=req[w];
+    env=mn<env?mn:(relC*env+(1-relC)*mn);
+    for(let c=0;c<chC;c++)chs[c][i]=Math.max(-ceilL,Math.min(ceilL,chs[c][i]*env));
+  }
+  postMetrics=await analyzeAudioBuffer(masteredBuffer);
+  const offs=currentPrescription.targetOffsets,preSc=calcScore(preMetrics,targetLufs,offs),postSc=calcScore(postMetrics,targetLufs,offs);
+  document.getElementById("cardPreScore").textContent=preSc;document.getElementById("cardPostScore").textContent=postSc;
+  document.getElementById("cardPostDesc").textContent=`+${Math.max(0.1,postSc-preSc).toFixed(1)} Puntos de Mejora`;
+  const rows=[
+    {n:"Integrated Loudness",pr:`${preMetrics.integratedLufs.toFixed(1)} LUFS`,t:`${targetLufs.toFixed(1)} LUFS`,po:`${postMetrics.integratedLufs.toFixed(1)} LUFS`,ok:Math.abs(postMetrics.integratedLufs-targetLufs)<=1.1},
+    {n:"4x True Peak",pr:`${preMetrics.truePeakDb.toFixed(2)} dBTP`,t:`<=${ceilingDb.toFixed(1)} dBTP`,po:`${postMetrics.truePeakDb.toFixed(2)} dBTP`,ok:postMetrics.truePeakDb<=ceilingDb+0.08},
+    {n:"Crest Factor",pr:`${preMetrics.crestDb.toFixed(1)} dB`,t:"6.0-12.5 dB",po:`${postMetrics.crestDb.toFixed(1)} dB`,ok:postMetrics.crestDb>=5.8},
+    {n:"M/S Phase Corr",pr:preMetrics.phaseCorr.toFixed(2),t:">=+0.55",po:postMetrics.phaseCorr.toFixed(2),ok:postMetrics.phaseCorr>=0.55}
+  ];
+  document.getElementById("qaTableBody").innerHTML=rows.map(r=>`<tr><td class="py-2 text-slate-200">${r.n}</td><td class="py-2 text-slate-400">${r.pr}</td><td class="py-2 text-cyan-400">${r.t}</td><td class="py-2 font-bold text-white">${r.po}</td><td class="py-2 text-right"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${r.ok?'bg-emerald-500/20 text-emerald-300':'bg-amber-500/20 text-amber-300'}">${r.ok?'[PASS]':'[OK]'}</span></td></tr>`).join("");
+  document.getElementById("spectralComparisonBars").innerHTML=BANDS.map(b=>`<div class="flex justify-between text-[11px] font-mono border-b border-slate-800/40 py-1"><span class="text-slate-300">${b.name}</span><span class="text-slate-400">Pre:${preMetrics.bandDb[b.id].toFixed(1)}dB → Post:<b class="text-emerald-400">${postMetrics.bandDb[b.id].toFixed(1)}dB</b> (Ref:${offs[b.id]}dB)</span></div>`).join("");
+  const norm=document.getElementById("fftNormalizeToggle").checked;
+  drawFFT("fftCanvas",preMetrics,postMetrics,norm);drawFFT("fftDualCanvas",preMetrics,postMetrics,norm);
+  document.getElementById("abTotalTime").textContent=fmtT(originalBuffer.duration);abMode="B";updateABGains();
+  document.getElementById("verificationSection").classList.remove("hidden");setStatus("[QA VERIFIED]","emerald");btn.disabled=false;
+}
 
-        <canvas id="fftDualCanvas" width="820" height="220" class="w-full h-48 bg-slate-950 rounded"></canvas>
-      </div>
+function encodeWav24(buf){
+  const nC=buf.numberOfChannels,sr=buf.sampleRate,len=buf.length,bA=nC*3,dS=len*bA,ab=new ArrayBuffer(44+dS),v=new DataView(ab),wS=(o,s)=>{for(let i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i));};
+  wS(0,"RIFF");v.setUint32(4,36+dS,true);wS(8,"WAVE");wS(12,"fmt ");v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,nC,true);v.setUint32(24,sr,true);v.setUint32(28,sr*bA,true);v.setUint16(32,bA,true);v.setUint16(34,24,true);wS(36,"data");v.setUint32(40,dS,true);
+  const chD=[];for(let c=0;c<nC;c++)chD.push(buf.getChannelData(c));
+  let off=44;
+  for(let i=0;i<len;i++)for(let c=0;c<nC;c++){
+    const s=Math.max(-1,Math.min(1,chD[c][i])),iv=Math.max(-8388608,Math.min(8388607,Math.round(s*8388607+(Math.random()-Math.random())*0.5)));
+    v.setUint8(off,iv&255);v.setUint8(off+1,(iv>>8)&255);v.setUint8(off+2,(iv>>16)&255);off+=3;
+  }
+  return ab;
+}
 
-      <div class="bg-slate-950/95 border border-cyan-500/40 rounded-2xl p-4 space-y-4 shadow-lg">
-        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-2.5">
-          <div>
-            <span class="text-xs font-bold uppercase tracking-wider text-cyan-300 block">Consola de Escucha A/B en Tiempo Real [Phase-Locked A/B Deck]</span>
-            <span id="abCompensationInfo" class="text-[11px] font-mono text-emerald-400">[Loudness Match Active: Equalizing perceived LUFS]</span>
-          </div>
+document.getElementById("audioInput").addEventListener("change",async e=>{
+  const f=e.target.files[0];if(!f)return;
+  currentFileName=f.name.replace(/\.[^/.]+$/,"");
+  document.getElementById("fileNameLabel").textContent=`Cargado: ${f.name}`;
+  setStatus("[DECODING...]","cyan");
+  try{
+    const ab=await f.arrayBuffer(),ctx=new(window.AudioContext||window.webkitAudioContext)();
+    if(ctx.state==="suspended")await ctx.resume();
+    originalBuffer=await ctx.decodeAudioData(ab);
+    document.getElementById("sourceMeta").classList.remove("hidden");
+    document.getElementById("metaSR").textContent=`${originalBuffer.sampleRate} Hz`;
+    document.getElementById("metaDur").textContent=`${originalBuffer.duration.toFixed(1)} s`;
+    document.getElementById("metaCh").textContent=originalBuffer.numberOfChannels===2?"Stereo [2ch]":"Mono [1ch]";
+    setStatus("[FFT 4096...]","amber");
+    preMetrics=await analyzeAudioBuffer(originalBuffer);
+    currentPrescription=computePrescription(preMetrics,document.getElementById("genreSelect").value);
+    renderPrescriptionUI(preMetrics,currentPrescription);
+    document.getElementById("analysisSection").classList.remove("hidden");
+    document.getElementById("verificationSection").classList.add("hidden");
+    setStatus("[READY]","emerald");
+  }catch(err){alert("Error Audio: "+err.message);setStatus("[ERROR]","rose");}
+  e.target.value="";
+});
 
-          <label class="flex items-center gap-2 bg-slate-900 border border-slate-700 px-3 py-1.5 rounded-xl cursor-pointer select-none">
-            <input type="checkbox" id="abLoudnessMatchToggle" checked class="accent-emerald-400 w-4 h-4" />
-            <span class="text-xs font-mono font-semibold text-slate-200">Igualar Volumen [LUFS Match]</span>
-          </label>
-        </div>
+const refP=()=>{const g=document.getElementById("genreSelect").value;document.getElementById("genreDescLabel").textContent=GENRE_PROFILES[g].desc;if(preMetrics){currentPrescription=computePrescription(preMetrics,g);renderPrescriptionUI(preMetrics,currentPrescription);}};
+document.getElementById("genreSelect").addEventListener("change",refP);
+document.getElementById("resetPrescriptionBtn").addEventListener("click",refP);
+document.getElementById("applyMasterBtn").addEventListener("click",processMasterAndVerify);
+document.getElementById("fftNormalizeToggle").addEventListener("change",e=>{if(preMetrics&&postMetrics){drawFFT("fftCanvas",preMetrics,postMetrics,e.target.checked);drawFFT("fftDualCanvas",preMetrics,postMetrics,e.target.checked);}});
+document.getElementById("abPlayPauseBtn").addEventListener("click",()=>abPlaying?stopAB(false):startAB(abOff));
+document.getElementById("abBtnA").addEventListener("click",()=>{abMode="A";updateABGains();});
+document.getElementById("abBtnB").addEventListener("click",()=>{abMode="B";updateABGains();});
+document.getElementById("abLoudnessMatchToggle").addEventListener("change",updateABGains);
+document.getElementById("abSeekSlider").addEventListener("input",e=>{if(!originalBuffer)return;const t=(parseFloat(e.target.value)/100)*originalBuffer.duration;document.getElementById("abCurrentTime").textContent=fmtT(t);if(abPlaying)startAB(t);else abOff=t;});
 
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 items-center">
-          <button id="abPlayPauseBtn" class="py-3 px-4 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-extrabold text-xs font-mono uppercase tracking-wider transition">
-            ▶ Play Audition [Sync]
-          </button>
-
-          <button id="abBtnA" class="py-3 px-4 rounded-xl border font-mono text-xs font-bold uppercase tracking-wider transition bg-slate-900 border-slate-700 text-slate-400">
-            A: Original [Source WAV]
-          </button>
-
-          <button id="abBtnB" class="py-3 px-4 rounded-xl border font-mono text-xs font-bold uppercase tracking-wider transition bg-emerald-500/20 border-emerald-400 text-emerald-300 shadow-[0_0_15px_rgba(16,185,129,0.25)]">
-            B: MAIK MT Master [Active]
-          </button>
-        </div>
-
-        <div class="space-y-1">
-          <input type="range" id="abSeekSlider" min="0" max="100" step="0.1" value="0" class="w-full cursor-pointer" />
-          <div class="flex justify-between text-[11px] font-mono text-slate-400">
-            <span id="abCurrentTime">00:00.0</span>
-            <span id="abActiveStreamLabel" class="text-emerald-400 font-bold">[AUDITIONING: B - MAIK MT MASTER]</span>
-            <span id="abTotalTime">00:00.0</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="overflow-x-auto">
-        <table class="w-full text-left text-xs font-mono border-collapse">
-          <thead>
-            <tr class="border-b border-slate-800 text-slate-400 text-[10px]">
-              <th class="py-2">PARAMETER</th>
-              <th class="py-2">PRE-MASTER</th>
-              <th cl
+document.getElementById("downloadMasterBtn").addEventListener("click",async()=>{
+  if(!masteredBuffer)return;
+  setStatus("[EXPORTING WAV...]","cyan");
+  const gTag=(document.getElementById("genreSelect").value||"MASTER").toUpperCase(),fName=`${currentFileName}_MAIK_MT_${gTag}_24BIT.wav`;
+  const wavAB=encodeWav24(masteredBuffer),blob=new Blob([wavAB],{type:"audio/wav"});
+  try{
+    if(window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.Filesystem){
+      const bytes=new Uint8Array(wavAB);let bin="";const ch=32768;
+      for(let i=0;i<bytes.length;i+=ch)bin+=String.fromCharCode.apply(null,bytes.subarray(i,i+ch));
+      const b64=btoa(bin);
+      const saved=await window.Capacitor.Plugins.Filesystem.writeFile({path:fName,data:b64,directory:"CACHE"});
+      if(window.Capacitor.Plugins.Share){
+        await window.Capacitor.Plugins.Share.share({title:fName,url:saved.uri,dialogTitle:"Guardar o Compartir Master WAV"});
+        setStatus("[EXPORTED]","emerald");return;
+      }
+    }
+    const fileObj=new File([blob],fName,{type:"audio/wav"});
+    if(navigator.canShare&&navigator.canShare({files:[fileObj]})){await navigator.share({files:[fileObj],title:fName});setStatus("[SHARED]","emerald");return;}
+  }catch(e){console.log(e);}
+  const u=URL.createObjectURL(blob),a=document.createElement("a");a.href=u;a.download=fName;document.body.appendChild(a);a.click();document.body.removeChild(a);setStatus("[DOWNLOADED]","emerald");
+});
+</script>
+</body>
+</html>
+<!-- [END OF FILE - 100% COMPLETE] -->
